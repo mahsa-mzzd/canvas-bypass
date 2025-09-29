@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Canvas Fingerprint Test with Bypass</title>
+<script>
+    setTimeout(() => {
+      // 1) Create iframe
+      var iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.documentElement.appendChild(iframe);
+  
+      // 2) Grab native methods
+      var nativeToDataURL = iframe.contentWindow.HTMLCanvasElement.prototype.toDataURL;
+      var nativeGetImageData = iframe.contentWindow.CanvasRenderingContext2D.prototype.getImageData;
+  
+      // 3) Remove iframe
+      document.documentElement.removeChild(iframe);
+  
+      // 4) Override
+      HTMLCanvasElement.prototype.toDataURL = nativeToDataURL;
+      CanvasRenderingContext2D.prototype.getImageData = nativeGetImageData;
+  
+      console.log("Re-applied native canvas methods after extension hooking.");
+  
+      // Now do your canvas drawing + fingerprint
+      var canvas = document.getElementById('testCanvas');
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = "#007FFF";
+      ctx.fillRect(0, 0, 300, 100);
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "#000";
+      ctx.fillText("Fingerprint Test", 10, 50);
+  
+      var fingerprint = canvas.toDataURL();
+      console.log("Fingerprint:", fingerprint);
+      document.title = "Fingerprint: " + fingerprint.substring(0, 50);
+  
+    }, 5000); // Delay 2 seconds
+  </script>  
+</head>
+<body>
+  <canvas id="testCanvas" width="300" height="100"></canvas>
+  <script>
+    // === Fingerprinting Code (Executes AFTER Bypass) ===
+    var canvas = document.getElementById('testCanvas');
+    var ctx = canvas.getContext('2d');
+
+    // Draw a blue rectangle (should be pure blue if no noise is applied)
+    ctx.fillStyle = "#007FFF";  // Interpreted as rgb(0,127,255)
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw fingerprinting text
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "#000000";
+    ctx.fillText("Fingerprint Test", 10, 50);
+
+    // Generate the fingerprint using the (hopefully restored) native toDataURL method
+    var fingerprint = canvas.toDataURL();
+    console.log("Fingerprint:", fingerprint);
+    
+    // Update the document title with part of the fingerprint for verification
+    document.title = "Fingerprint: " + fingerprint.substring(0, 50);
+  </script>
+</body>
+</html>
